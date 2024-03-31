@@ -87,6 +87,7 @@ def calculate_length_focal_distance(heightOptimizeList,
     
     return length_focus_distance
 
+
 def modified_calculate_length_focal_distance(heightOptimize,
                                             heightsOptimizeList: list,
                                             currentLinse: int) -> float:
@@ -98,9 +99,9 @@ def modified_calculate_length_focal_distance(heightOptimize,
     return: Функция возвращает длину фокального отрезка
 
     params: 
-    heightOptimize: Высота, которая подбирается
-    heightsOptimizeList: Список фиксированных высот
-    currentLinse: Текущая линза, для которой идёт оптимизация
+    `heightOptimize`: Высота, которая подбирается
+    `heightsOptimizeList`: Список фиксированных высот
+    `currentLinse`: Текущая линза, для которой идёт оптимизация
     '''
     
     validateDataSet(data_set_0)
@@ -152,20 +153,28 @@ def modified_calculate_length_focal_distance(heightOptimize,
 
 #TODO: реализовать покоординатный метод поиска
 #TODO: подумать над самой идеей метода
-def test_method(eps = 1e-4):
+def test_method(eps = 1e-4, bounds: tuple[int, int] = None, step: int = None):
 
     '''
     Алгоритм перебирает все значение и находит минимум
     '''
 
-    minHeight = 1
-    maxHeight = 10
-    heightsMassive = np.linspace(minHeight, maxHeight, 100)
+    if bounds is None:
+        minHeight = 1
+        maxHeight = 10
+        step_ = 100 if step is None else step
+        heightsMassive = np.linspace(minHeight, maxHeight, step_)
+    else:
+        minHeight = bounds[0]
+        maxHeight = bounds[1]
+        step_ = 100 if step is None else step
+        heightsMassive = np.linspace(minHeight, maxHeight, step_)
+
 
     HeightOptimizeMassive = [] # добавление без [мкм] 
     [HeightOptimizeMassive.append(1.) for _ in range(1, data_set_0['count_linse'] + 1)]
 
-    # словарь рассчитан макс для 500 элементов
+    # словарь рассчитан макс для 500 элементов?
     globalFocalDist = {}
     globalHeightValues = {}
     globalCountIter = 0
