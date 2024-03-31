@@ -15,7 +15,7 @@ from InputTestDate import data_set_0, validateDataSet
 #TODO: подумать насчёт правильности/логичности алгоритма
 #FIXME: посмотреть значения данных, их размерность
 #FIXME: пофиксить функцию, добавить новые параметры для дальнейших оптимизаций
-def calculate_length_focal_distance(heightOptimizeList: list[float],
+def calculate_length_focal_distance(heightOptimizeList,
                                     show_plot = False) -> float:
     
     '''
@@ -33,7 +33,6 @@ def calculate_length_focal_distance(heightOptimizeList: list[float],
                                 100) # без [нм]
 
     focus_labmda_dict = {}
-    focus_labmda_reduce_test= []
     for lmbd in lambdaMassive:
         MatrixMultsList = []
 
@@ -63,19 +62,11 @@ def calculate_length_focal_distance(heightOptimizeList: list[float],
         MatrixMultsList.reverse()
         MatrixMultsList = np.array(MatrixMultsList)
 
-        mult_res_reduce = reduce(matmul, MatrixMultsList)
-
-        mult_res = MatrixMultsList[0] @ MatrixMultsList[1]
-        for j in range(2, len(MatrixMultsList)):
-            mult_res = mult_res @ MatrixMultsList[j]
-        #mult_res = mult_res @ MatrixMultsList[-1]
+        mult_res = reduce(matmul, MatrixMultsList)
 
         focus_labmda_dict[lmbd] = pow( -mult_res[1,0], -1)
-        focus_labmda_reduce_test.append(pow(-mult_res_reduce[1, 0], -1))
 
     all_focus = list(focus_labmda_dict.values())
-    all_focus_reduce = list(focus_labmda_reduce_test)
-    length_focus_distance_reduce = max(all_focus_reduce) - min(all_focus_reduce)
     length_focus_distance = max(all_focus) - min(all_focus)
 
     if show_plot: 
@@ -93,9 +84,71 @@ def calculate_length_focal_distance(heightOptimizeList: list[float],
         plt.show()
 
         print('Длина фокального отрезка: {} см'.format(length_focus_distance * 100))
-        print('Длина фокального отрезка reduce: {} см'.format(length_focus_distance_reduce * 100))
     
-    return length_focus_distance, length_focus_distance_reduce
+    return length_focus_distance
+
+def modified_calculate_length_focal_distance(heightOptimize,
+                                            heightsOptimizeList: list,
+                                            currentLinse: int) -> float:
+    
+    '''
+    Description: Модифицированная функция для подачи 
+    её в аругемент функции оптимизации из модуля SciPy
+
+    return: Функция возвращает длину фокального отрезка
+
+    params: 
+    heightOptimize: Высота, которая подбирается
+    heightsOptimizeList: Список фиксированных высот
+    currentLinse: Текущая линза, для которой идёт оптимизация
+    '''
+    
+    validateDataSet(data_set_0)
+
+    lambdaMassive = np.linspace(data_set_0['lower_lambda'] * 1e9,
+                                data_set_0['upper_lambda'] * 1e9,
+                                100) # без [нм]
+
+    focus_labmda_dict = {}
+    for lmbd in lambdaMassive:
+        MatrixMultsList = []
+
+        for currentNumLinse in range(1, data_set_0['count_linse'] + 1):
+
+            removeDegreeToLambda_0 = (data_set_0['lambda_0'][currentNumLinse] * 1e9) # [нм -> 10^(-9)]
+
+            if currentNumLinse == currentLinse:
+                harmonica = ((heightOptimize * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
+            else:
+                harmonica = ((heightsOptimizeList[currentNumLinse-1] * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
+              
+
+            k = ceil((removeDegreeToLambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
+
+            focus = ((harmonica * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
+            Optic_Power = pow(focus , -1)
+
+            Refractive_Matrix = np.array( [ [1, 0], 
+                                            [-Optic_Power, 1] ])
+            MatrixMultsList.append(Refractive_Matrix)
+            
+            if currentNumLinse != data_set_0['count_linse']:
+                reduce_dist = data_set_0['distance']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)] / data_set_0['refractive_index'][currentNumLinse]
+                Transfer_Matrix   = np.array( [ [1, reduce_dist ],
+                                                [0,1] ])
+                MatrixMultsList.append(Transfer_Matrix)
+                
+        MatrixMultsList.reverse()
+        MatrixMultsList = np.array(MatrixMultsList)
+
+        mult_res = reduce(matmul, MatrixMultsList)
+
+        focus_labmda_dict[lmbd] = pow( -mult_res[1,0], -1)
+
+    all_focus = list(focus_labmda_dict.values())
+    length_focus_distance = max(all_focus) - min(all_focus)
+    return length_focus_distance
+
 
 #TODO: реализовать покоординатный метод поиска
 #TODO: подумать над самой идеей метода

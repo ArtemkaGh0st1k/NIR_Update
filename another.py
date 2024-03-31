@@ -127,9 +127,7 @@ def getElem(row: int, column: int) -> str:
 '''
 
 ''' Явное перемножение матриц
-mult_res_reduce = reduce(matmul, MatrixMultsList)
-
-        mult_res = MatrixMultsList[0] @ MatrixMultsList[1]
-        for j in range(2, len(MatrixMultsList)):
-            mult_res = mult_res @ MatrixMultsList[j]
+    mult_res = MatrixMultsList[0] @ MatrixMultsList[1]
+    for j in range(2, len(MatrixMultsList)):
+        mult_res = mult_res @ MatrixMultsList[j]
 '''
