@@ -127,7 +127,45 @@ def getElem(row: int, column: int) -> str:
 '''
 
 ''' Явное перемножение матриц
+
+
     mult_res = MatrixMultsList[0] @ MatrixMultsList[1]
     for j in range(2, len(MatrixMultsList)):
         mult_res = mult_res @ MatrixMultsList[j]
 '''
+
+import numpy as np
+
+# Определение функции для вычисления градиента численно методом конечных разностей
+def numerical_gradient(objective_function, x, epsilon=1e-6):
+    gradient = np.zeros_like(x)
+    for i in range(len(x)):
+        x_plus = np.copy(x)
+        x_plus[i] += epsilon
+        x_minus = np.copy(x)
+        x_minus[i] -= epsilon
+        gradient[i] = (objective_function(x_plus) - objective_function(x_minus)) / (2 * epsilon)
+    return gradient
+
+# Метод градиентного спуска для оптимизации функции с неявно заданным градиентом
+def gradient_descent(objective_function, initial_guess, learning_rate=0.1, tolerance=1e-6, max_iterations=1000):
+    x = initial_guess
+    for _ in range(max_iterations):
+        grad = numerical_gradient(objective_function, x)
+        if np.linalg.norm(grad) < tolerance:
+            break
+        x -= learning_rate * grad
+    return x, objective_function(x)
+
+# Пример неявно заданной целевой функции (квадратичная функция)
+def objective_function(x):
+    return (x[0] - 1)**2 + (x[1] - 2)**2
+
+# Начальное приближение
+initial_guess = np.array([0, 0])
+
+# Запуск метода градиентного спуска
+optimal_params, optimal_value = gradient_descent(objective_function, initial_guess)
+
+print("Оптимальные параметры:", optimal_params)
+print("Оптимальное значение функции:", optimal_value)

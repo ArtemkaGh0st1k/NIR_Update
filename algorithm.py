@@ -1,8 +1,10 @@
-import matplotlib.pyplot as plt
-import numpy as np
 from math import ceil
 from functools import reduce
 from operator import matmul
+
+import matplotlib.pyplot as plt
+import numpy as np
+from scipy.optimize import minimize, minimize_scalar
 
 from InputTestDate import data_set_0, validateDataSet
 
@@ -15,7 +17,8 @@ from InputTestDate import data_set_0, validateDataSet
 #TODO: подумать насчёт правильности/логичности алгоритма
 #FIXME: посмотреть значения данных, их размерность
 #FIXME: пофиксить функцию, добавить новые параметры для дальнейших оптимизаций
-def calculate_length_focal_distance(heightOptimizeList,
+def calculate_length_focal_distance(data_set_0: dict,
+                                    heightOptimizeList: list[float] = None,
                                     show_plot = False) -> float:
     
     '''
@@ -30,7 +33,13 @@ def calculate_length_focal_distance(heightOptimizeList,
 
     lambdaMassive = np.linspace(data_set_0['lower_lambda'] * 1e9,
                                 data_set_0['upper_lambda'] * 1e9,
-                                100) # без [нм]
+                                1000) # без [нм]
+    
+    # Идёт заполнение массива гармоник,
+    # если не был задан массив высот
+    if heightOptimizeList is None:
+        harmonics = []
+        [harmonics.append(5+i) for i in range(1, data_set_0['count_linse'] + 1)]
 
     focus_labmda_dict = {}
     for lmbd in lambdaMassive:
@@ -38,25 +47,33 @@ def calculate_length_focal_distance(heightOptimizeList,
 
         for currentNumLinse in range(1, data_set_0['count_linse'] + 1):
 
-            #removeDegreeToHeight = float(heightOptimizeList[currentNumLinse-1] * 1e6) # [мкм -> 10^(-6)]
-            #removeDegreeToLambda = lmbd * 1e9 # [нм -> 10^(-9)]
-            removeDegreeToLambda_0 = (data_set_0['lambda_0'][currentNumLinse] * 1e9) # [нм -> 10^(-9)]
-             
-            harmonica = ((heightOptimizeList[currentNumLinse-1] * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
+            removeDegreeToLambda_0 = (data_set_0['lambda_0'][currentNumLinse]) * 1e9 # [нм -> 10^(-9)]
 
-            k = ceil((removeDegreeToLambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
+            if heightOptimizeList is None:
+                k = round((removeDegreeToLambda_0 / (lmbd)) * harmonics[currentNumLinse-1]) #FIXME: Правильно ли округляю число k?
+                focus = ((harmonics[currentNumLinse-1] * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
+            else:
+                harmonica = (heightOptimizeList[currentNumLinse-1] * (data_set_0['refractive_index'][currentNumLinse] - 1) / removeDegreeToLambda_0) * 1e3
+                k = round((removeDegreeToLambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
+                focus = ((harmonica * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
 
-            focus = ((harmonica * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
-            Optic_Power = pow(focus , -1)
-
-            Refractive_Matrix = np.array( [ [1, 0], 
-                                            [-Optic_Power, 1] ])
+            Optic_Power = pow(focus , -1)            
+            Refractive_Matrix = np.array(
+                [
+                    [1, 0],
+                    [-Optic_Power, 1]
+                ]
+            )
             MatrixMultsList.append(Refractive_Matrix)
             
             if currentNumLinse != data_set_0['count_linse']:
                 reduce_dist = data_set_0['distance']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)] / data_set_0['refractive_index'][currentNumLinse]
-                Transfer_Matrix   = np.array( [ [1, reduce_dist ],
-                                                [0,1] ])
+                Transfer_Matrix = np.array(
+                    [
+                        [1, reduce_dist],
+                        [0, 1]
+                    ]
+                )
                 MatrixMultsList.append(Transfer_Matrix)
                 
         MatrixMultsList.reverse()
@@ -89,8 +106,9 @@ def calculate_length_focal_distance(heightOptimizeList,
 
 
 def modified_calculate_length_focal_distance(heightOptimize,
-                                            heightsOptimizeList: list,
-                                            currentLinse: int) -> float:
+                                            heightsConstList: list,
+                                            currentLinse: int,
+                                            data_set_0: dict) -> float:
     
     '''
     Description: Модифицированная функция для подачи 
@@ -100,7 +118,7 @@ def modified_calculate_length_focal_distance(heightOptimize,
 
     params: 
     `heightOptimize`: Высота, которая подбирается
-    `heightsOptimizeList`: Список фиксированных высот
+    `heightsConstList`: Список фиксированных высот
     `currentLinse`: Текущая линза, для которой идёт оптимизация
     '''
     
@@ -121,22 +139,29 @@ def modified_calculate_length_focal_distance(heightOptimize,
             if currentNumLinse == currentLinse:
                 harmonica = ((heightOptimize * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
             else:
-                harmonica = ((heightsOptimizeList[currentNumLinse-1] * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
+                harmonica = ((heightsConstList[currentNumLinse-1] * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
               
 
             k = ceil((removeDegreeToLambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
 
             focus = ((harmonica * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
-            Optic_Power = pow(focus , -1)
-
-            Refractive_Matrix = np.array( [ [1, 0], 
-                                            [-Optic_Power, 1] ])
+            Optic_Power = pow(focus , -1)            
+            Refractive_Matrix = np.array(
+                [
+                    [1, 0],
+                    [-Optic_Power, 1]
+                ]
+            )
             MatrixMultsList.append(Refractive_Matrix)
             
             if currentNumLinse != data_set_0['count_linse']:
                 reduce_dist = data_set_0['distance']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)] / data_set_0['refractive_index'][currentNumLinse]
-                Transfer_Matrix   = np.array( [ [1, reduce_dist ],
-                                                [0,1] ])
+                Transfer_Matrix = np.array(
+                    [
+                        [1, reduce_dist],
+                        [0, 1]
+                    ]
+                )
                 MatrixMultsList.append(Transfer_Matrix)
                 
         MatrixMultsList.reverse()
@@ -153,7 +178,7 @@ def modified_calculate_length_focal_distance(heightOptimize,
 
 #TODO: реализовать покоординатный метод поиска
 #TODO: подумать над самой идеей метода
-def test_method(eps = 1e-4, bounds: tuple[int, int] = None, step: int = None):
+def test_method(data_set_0: dict, eps = 1e-4, bounds: tuple[int, int] = None, step: int = None):
 
     '''
     Алгоритм перебирает все значение и находит минимум
@@ -176,61 +201,115 @@ def test_method(eps = 1e-4, bounds: tuple[int, int] = None, step: int = None):
 
     # словарь рассчитан макс для 500 элементов?
     globalFocalDist = {}
-    globalHeightValues = {}
+    #globalHeightValues = {}
     globalCountIter = 0
 
     while(globalCountIter < 100):
 
         if globalCountIter > 1:
-           if (globalFocalDist['{}_{}'.format('Step', str(globalCountIter-1))] - globalFocalDist['{}_{}'.format('Step', str(globalCountIter))]) < eps:
-               return [ f'Дипазон оптимизации высот: от {minHeight} мкм до {maxHeight} мкм',
+            if (globalFocalDist['{}_{}'.format('Step', str(globalCountIter))] - globalFocalDist['{}_{}'.format('Step', str(globalCountIter-1))]) < eps:
+                return [ f'Дипазон оптимизации высот: от {minHeight} мкм до {maxHeight} мкм',
                         f'Шаг оптимизации высот: 1 / {len(heightsMassive)} мкм',
                         'Фок.отрезок : {} см'.format((globalFocalDist[f'Step_{globalCountIter}'] * 100).__round__(4)), 
                         f'Число иттераций(по системе): {globalCountIter}',
-                        [f'Линза {numLinse} : {height.__round__(4)} мкм' for numLinse, height in globalHeightValues.items()]
-                      ]
-           
+                        f'Высоты равны = {HeightOptimizeMassive} мкм'
+                        ]
         
-        for count_linse in range(1, data_set_0['count_linse'] + 1):
-            
-            '''[x_0]
-            # начальное значение для сравнения
-            #tempH = heightsMassive[0]
-            #HeightOptimizeMassive[count_linse-1] = heightsMassive[0]
-            #focal_dist_next = calculate_length_focal_distance(HeightOptimizeMassive)
-            '''
 
-            # макс. размер словарей 500 объектов???
-            HelperFocalDist_Dict = {}
-            HelperHeight_Dict = {} 
-            for index, height in enumerate(heightsMassive):
+        localFocalDist = {}
+        localCountIter = 0  
+        while(True):
 
-                '''[prev&next]
-                #focal_dist_prev = focal_dist_next
-                #focal_dist = calculate_length_focal_distance(HeightOptimizeMassive)
-
-                #diff = focal_dist_next - focal_dist_prev
-                #if fabs(focal_dist_next - focal_dist_prev) < eps:
-                '''
+            if localCountIter > 1:
+                if (localFocalDist['{}_{}'.format('Step', str(localCountIter))] - localFocalDist['{}_{}'.format('Step', str(localCountIter-1))]) < eps:
+                    break       
                 
-                HeightOptimizeMassive[count_linse-1] = height
-                focal_dist = calculate_length_focal_distance(HeightOptimizeMassive)
+            for count_linse in range(1, data_set_0['count_linse'] + 1):
+                
+                # макс. размер словарей 500 объектов???
+                HelperFocalDist_Dict = {}
+                HelperHeight_Dict = {} 
+                for index, height in enumerate(heightsMassive):
 
-                # трюк для того, чтобы достать высоту, при которой был мин.фок.отрезок
-                HelperFocalDist_Dict[index] = focal_dist
-                HelperHeight_Dict[str(focal_dist)] = height
+                    HeightOptimizeMassive[count_linse-1] = height
+                    focal_dist = calculate_length_focal_distance(HeightOptimizeMassive, data_set_0)
+
+                    # трюк для того, чтобы достать высоту, при которой был мин.фок.отрезок
+                    HelperFocalDist_Dict[index] = focal_dist
+                    HelperHeight_Dict[str(focal_dist)] = height
+                
+                min_focal_dist = min(HelperFocalDist_Dict.values())
+                HeightOptimizeMassive[count_linse-1] = HelperHeight_Dict[str(min_focal_dist)]
+                #globalHeightValues[count_linse] = HelperHeight_Dict[str(min_focal_dist)]
+
+                HelperHeight_Dict.clear()
+                HelperFocalDist_Dict.clear()
             
-            min_focal_dist = min(HelperFocalDist_Dict.values())
-            HeightOptimizeMassive[count_linse-1] = HelperHeight_Dict[str(min_focal_dist)]
-            globalHeightValues[count_linse] = HelperHeight_Dict[str(min_focal_dist)]
-
-            HelperHeight_Dict.clear()
-            HelperFocalDist_Dict.clear()
+            localCountIter += 1
+            #for count_linse in range(1, data_set_0['count_linse'] + 1):
+                #HeightOptimizeMassive[count_linse-1] = globalHeightValues[count_linse]  
+            localFocalDist[f'Step_{localCountIter}'] = calculate_length_focal_distance(HeightOptimizeMassive, data_set_0)
         
-        globalCountIter += 1
-        #for count_linse in range(1, data_set_0['count_linse'] + 1):
-            #HeightOptimizeMassive[count_linse-1] = globalHeightValues[count_linse]  
-        globalFocalDist[f'Step_{globalCountIter}'] = calculate_length_focal_distance(HeightOptimizeMassive)
+        globalCountIter +=1
+        globalFocalDist[f'Step_{globalCountIter}'] = calculate_length_focal_distance(HeightOptimizeMassive, data_set_0)
             
 
-        
+def OneDimensionalOptimization(data_set_0: dict, eps = 1e-5
+                               ) -> tuple[list[float], list[float], float]:
+
+    '''
+    Description: Одномерная оптимизация
+
+    Return: Возвращает кортеж ->
+            1) Начальное приближение\n
+            2) Список высот в [мкм]\n
+            3) Фокальный отрезок в [м]
+
+    Warning: Данный метод очень сильно зависит
+            от начального приближения
+
+    `data_set_0`: начальный датасет
+    `eps`: точность
+    '''
+
+    initial_height = [1., 1., 1.]
+    retuned_initial_heiht = initial_height
+    options = {'maxiter': 100, 'xatol': eps}
+
+    globalIter = 0
+    globalFocalDit_Dict = {}
+
+    while(globalIter < 100):
+
+        if globalIter > 1:
+            if globalFocalDit_Dict['Iter_{}'.format(str(globalIter))] - globalFocalDit_Dict['Iter_{}'.format(str(globalIter-1))] < eps:
+                break
+
+        localIter = 0
+        localFocalDit_Dict = {}
+        while(True):
+            if localIter > 1:
+                if localFocalDit_Dict['Iter_{}'.format(str(localIter))] - localFocalDit_Dict['Iter_{}'.format(str(localIter-1))] < eps:
+                    break
+            # для всех лизн, кроме i высоты фиксированы
+            # это нужно для поиска минимума для каждой линзы т.е одномерная оптимизация
+            for numLinse in range(1, data_set_0['count_linse'] + 1):
+
+                result_scipy = minimize_scalar(modified_calculate_length_focal_distance,
+                                                method='bounded', bounds=(1, 30),
+                                                args=(initial_height,numLinse, data_set_0), options=options)
+                if result_scipy.success:
+                    height = result_scipy.x
+                    initial_height[numLinse-1] = height
+                else:
+                    raise TypeError('Внимательно подавайте аргументы в функцию!')
+            
+            localIter += 1
+            localFocalDit_Dict[f'Iter_{localIter}'] =  calculate_length_focal_distance(data_set_0, initial_height)
+
+        localFocalDit_Dict.clear()
+        globalIter +=1
+        globalFocalDit_Dict[f'Iter_{globalIter}'] = calculate_length_focal_distance(data_set_0, initial_height)  
+
+    return retuned_initial_heiht, initial_height, globalFocalDit_Dict[f'Iter_{globalIter}']
+      
