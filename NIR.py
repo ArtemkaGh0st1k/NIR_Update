@@ -2,14 +2,12 @@ from Algorithms.OptimizationParams.Height.BorderMethod import test_method
 from Algorithms.OptimizationParams.Height.MainAlghorithm import calculate_length_focal_distance
 from Algorithms.OptimizationParams.Height.ModifiedAlgorithm import modified_calculate_length_focal_distance
 from Algorithms.OptimizationParams.Height.OneDimension import OneDimensionalOptimization
-from Validate.InputTestDate import data_set_0
+from Data.InputTestDate import data_set_0
 
 
 if __name__ == '__main__':
 
- 
-    #res = chatGPT_test_method(data_set_0)
-    #
+
     #with open('results.txt', 'a') as file:
     #    for elem in res:
     #        file.write(str(elem) + '\n')

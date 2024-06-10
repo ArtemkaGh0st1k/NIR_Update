@@ -1,6 +1,6 @@
 from scipy.optimize import minimize, minimize_scalar
 
-from Validate.InputTestDate import validateDataSet
+from Data.InputTestDate import validateDataSet
 from MainAlghorithm import calculate_length_focal_distance
 from ModifiedAlgorithm import modified_calculate_length_focal_distance
 

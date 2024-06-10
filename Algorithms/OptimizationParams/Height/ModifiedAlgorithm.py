@@ -4,7 +4,7 @@ from operator import matmul
 import numpy as np
 from numpy import ceil
 
-from Validate.InputTestDate import validateDataSet
+from Data.InputTestDate import validateDataSet
 
 
 def modified_calculate_length_focal_distance(heightOptimize,
@@ -36,17 +36,21 @@ def modified_calculate_length_focal_distance(heightOptimize,
 
         for currentNumLinse in range(1, data_set_0['count_linse'] + 1):
 
-            removeDegreeToLambda_0 = (data_set_0['lambda_0'][currentNumLinse] * 1e9) # [нм -> 10^(-9)]
+            lambda_0 = (data_set_0['lambda_0'][currentNumLinse] * 1e9) # [нм -> 10^(-9)]
 
             if currentNumLinse == currentLinse:
-                harmonica = ((heightOptimize * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
+                refractive_index = data_set_0['refractive_index'][currentNumLinse]
+                harmonica = ((heightOptimize * (refractive_index - 1)) / lambda_0) * 1e3
             else:
-                harmonica = ((heightsConstList[currentNumLinse-1] * (data_set_0['refractive_index'][currentNumLinse] - 1)) / removeDegreeToLambda_0) * 1e3
+                heightConst = heightsConstList[currentNumLinse-1]
+                refractive_index = data_set_0['refractive_index'][currentNumLinse]
+
+                harmonica = ((heightConst * (refractive_index - 1)) / lambda_0) * 1e3
               
 
-            k = ceil((removeDegreeToLambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
+            k = ceil((lambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
 
-            focus = ((harmonica * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
+            focus = ((harmonica * lambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
             Optic_Power = pow(focus , -1)            
             Refractive_Matrix = np.array(
                 [
@@ -57,7 +61,11 @@ def modified_calculate_length_focal_distance(heightOptimize,
             MatrixMultsList.append(Refractive_Matrix)
             
             if currentNumLinse != data_set_0['count_linse']:
-                reduce_dist = data_set_0['distance']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)] / data_set_0['refractive_index'][currentNumLinse]
+                refractive_area = data_set_0['refractive_area']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)]
+                dist = data_set_0['distance']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)]
+
+                reduce_dist = dist / refractive_area
+
                 Transfer_Matrix = np.array(
                     [
                         [1, reduce_dist],

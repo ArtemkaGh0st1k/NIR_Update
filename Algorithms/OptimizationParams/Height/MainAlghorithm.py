@@ -4,7 +4,7 @@ from functools import reduce
 import numpy as np
 import matplotlib.pyplot as plt
 
-from Validate.InputTestDate import validateDataSet
+from Data.InputTestDate import validateDataSet
 
 
 # матрица преломления -> R = [1 0; -Ф 1]
@@ -49,12 +49,18 @@ def calculate_length_focal_distance(data_set_0: dict,
             removeDegreeToLambda_0 = (data_set_0['lambda_0'][currentNumLinse]) * 1e9 # [нм -> 10^(-9)]
 
             if heightOptimizeList is None:
-                k = round((removeDegreeToLambda_0 / (lmbd)) * harmonics[currentNumLinse-1]) #FIXME: Правильно ли округляю число k?
-                focus = ((harmonics[currentNumLinse-1] * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
-            else:
-                harmonica = (heightOptimizeList[currentNumLinse-1] * (data_set_0['refractive_index'][currentNumLinse] - 1) / removeDegreeToLambda_0) * 1e3
+                harmonica = harmonics[currentNumLinse - 1]
+
                 k = round((removeDegreeToLambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
                 focus = ((harmonica * removeDegreeToLambda_0) / (k * lmbd)) * data_set_0['focus_0'][currentNumLinse]
+            else:
+                height_Optimize = heightOptimizeList[currentNumLinse-1]
+                refractive_index = data_set_0['refractive_index'][currentNumLinse]
+                focus_0 = data_set_0['focus_0'][currentNumLinse]
+
+                harmonica = (height_Optimize * (refractive_index - 1) / removeDegreeToLambda_0) * 1e3
+                k = round((removeDegreeToLambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
+                focus = ((harmonica * removeDegreeToLambda_0) / (k * lmbd)) * focus_0
 
             Optic_Power = pow(focus , -1)            
             Refractive_Matrix = np.array(
@@ -66,7 +72,12 @@ def calculate_length_focal_distance(data_set_0: dict,
             MatrixMultsList.append(Refractive_Matrix)
             
             if currentNumLinse != data_set_0['count_linse']:
-                reduce_dist = data_set_0['distance']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)] / data_set_0['refractive_index'][currentNumLinse]
+
+                refractive_area = data_set_0['refractive_area']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)]
+                dist = data_set_0['distance']['{}-{}'.format(currentNumLinse, currentNumLinse + 1)]
+
+                reduce_dist = dist / refractive_area
+
                 Transfer_Matrix = np.array(
                     [
                         [1, reduce_dist],
