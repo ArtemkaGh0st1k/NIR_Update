@@ -30,7 +30,7 @@ def OneDimensionalOptimization(data_set_0: dict, eps = 1e-5
 
     validateDataSet(data_set_0)
 
-    initial_height = [1., 1., 1.]
+    initial_height = [5., 5., 5.]
     retuned_initial_heiht = initial_height
     options = {'maxiter': 100, 'xatol': eps}
 
