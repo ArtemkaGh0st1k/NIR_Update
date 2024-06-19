@@ -12,7 +12,7 @@ from functools import reduce
 import numpy as np
 import matplotlib.pyplot as plt
 
-from Data.InputTestDate import validateDataSet
+from Data.InputTestDate import validate_data_set
 
 
 # матрица преломления -> R = [1 0; -Ф 1]
@@ -29,14 +29,23 @@ def calculate_length_focal_distance(data_set_0: dict,
                                     show_plot = False) -> float:
     
     '''
-    return: Функция возвращает длину фокального отрезка
+    Description
+    -----------
+    Основная функция для графической и расчётной интерпретации
+    зависимости длины фок.расстояния от длины волны
+    
+    Return
+    ------
+    Функция возвращает длину фокального отрезка
 
-    params: 
-    heightOptimizeList: Параметр оптимизации; в данном случае список высот
-    show_plot: Если true -> Выводит график зависимсоти длины волны от фокусного расстояния
+    Params
+    ------
+    `data_set_0`: Исходные данные
+    `heightOptimizeList`: Параметр оптимизации; в данном случае список высот
+    `show_plot`: Если true -> Выводит график зависимсоти длины волны от фокусного расстояния
     '''
     
-    validateDataSet(data_set_0)
+    validate_data_set(data_set_0)
 
     lambdaMassive = np.linspace(data_set_0['lower_lambda'] * 1e9,
                                 data_set_0['upper_lambda'] * 1e9,

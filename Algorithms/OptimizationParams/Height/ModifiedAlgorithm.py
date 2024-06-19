@@ -4,7 +4,7 @@ from operator import matmul
 import numpy as np
 from numpy import ceil
 
-from Data.InputTestDate import validateDataSet
+from Data.InputTestDate import validate_data_set
 
 
 def modified_calculate_length_focal_distance(heightOptimize,
@@ -13,18 +13,23 @@ def modified_calculate_length_focal_distance(heightOptimize,
                                             data_set_0: dict) -> float:
     
     '''
-    Description: Модифицированная функция для подачи 
+    Description
+    -----------
+    Модифицированная функция для подачи 
     её в аругемент функции оптимизации из модуля SciPy
 
-    return: Функция возвращает длину фокального отрезка
+    Return
+    ------
+    Функция возвращает длину фокального отрезка
 
-    params: 
+    Params
+    ------
     `heightOptimize`: Высота, которая подбирается
     `heightsConstList`: Список фиксированных высот
     `currentLinse`: Текущая линза, для которой идёт оптимизация
     '''
     
-    validateDataSet(data_set_0)
+    validate_data_set(data_set_0)
 
     lambdaMassive = np.linspace(data_set_0['lower_lambda'] * 1e9,
                                 data_set_0['upper_lambda'] * 1e9,

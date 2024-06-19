@@ -1,7 +1,6 @@
 # Словарь начальных данных
 
-data_set_0 = {
-
+DATA_SET_0 = {
     'count_linse': 3,
     'lower_lambda': 400 * 1e-9,
     'upper_lambda': 1000 * 1e-9,
@@ -32,7 +31,7 @@ data_set_0 = {
 }
 
 
-def validateDataSet(data_set: dict):
+def validate_data_set(data_set: dict):
 
     '''
     `Description`: Проверяет корректность входных данных
@@ -40,7 +39,7 @@ def validateDataSet(data_set: dict):
 
     count_linse = data_set['count_linse']
 
-    if data_set_0['count_linse'] <= 1: 
+    if data_set['count_linse'] <= 1: 
         raise ValueError('Количество линз должно быть больше 1')
 
     for key in data_set:

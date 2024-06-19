@@ -5,7 +5,7 @@ from MainAlghorithm import calculate_length_focal_distance
 
 #TODO: реализовать покоординатный метод поиска
 #TODO: подумать над самой идеей метода
-def test_method(data_set_0: dict, eps = 1e-4, bounds: tuple[int, int] = None, step: int = None):
+def border_method(data_set_0: dict, eps = 1e-4, bounds: tuple[int, int] = None, step: int = None):
 
     '''
     Алгоритм перебирает все значение и находит минимум

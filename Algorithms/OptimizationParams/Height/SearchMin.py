@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from MainAlghorithm import calculate_length_focal_distance
 
 
-def SearchMin(data_set_0: dict, 
+def search_min(data_set_0: dict, 
             step: int | float = 0.1,     
             accuracy = 1e-6):
     

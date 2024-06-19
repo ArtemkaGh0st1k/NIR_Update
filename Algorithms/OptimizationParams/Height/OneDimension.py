@@ -1,6 +1,6 @@
 from scipy.optimize import minimize, minimize_scalar
 
-from Data.InputTestDate import validateDataSet
+from Data.InputTestDate import validate_data_set
 from MainAlghorithm import calculate_length_focal_distance
 from ModifiedAlgorithm import modified_calculate_length_focal_distance
 
@@ -10,25 +10,31 @@ from ModifiedAlgorithm import modified_calculate_length_focal_distance
 # итоговая матрица -> перемножение всех матриц с конца
 
 
-def OneDimensionalOptimization(data_set_0: dict, eps = 1e-5
+def one_dimensional_optimization(data_set_0: dict, eps = 1e-5
                                ) -> tuple[list[float], list[float], float]:
 
     '''
-    Description: Одномерная оптимизация
+    Description
+    -----------
+    Одномерная оптимизация
 
-    Return: Возвращает кортеж ->
+    Return
+    ------
+    Возвращает кортеж ->
             1) Начальное приближение\n
             2) Список высот в [мкм]\n
             3) Фокальный отрезок в [м]
 
-    Warning: Данный метод очень сильно зависит
-            от начального приближения
+    Warning
+    -------
+    Данный метод очень сильно зависит
+    от начального приближения
 
     `data_set_0`: начальный датасет
     `eps`: точность
     '''
 
-    validateDataSet(data_set_0)
+    validate_data_set(data_set_0)
 
     initial_height = [5., 5., 5.]
     retuned_initial_heiht = initial_height
