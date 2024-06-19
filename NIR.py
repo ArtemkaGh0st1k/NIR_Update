@@ -14,7 +14,7 @@ if __name__ == '__main__':
     #    file.write('___________________________________________________\n\n')
 
     #print(*res, sep='\n')
-    calculate_length_focal_distance(data_set_0, None, True)
+    #calculate_length_focal_distance(data_set_0, None, True)
 
     
     initial_heights, heights, focal_dist = OneDimensionalOptimization(data_set_0)
