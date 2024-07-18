@@ -1,4 +1,3 @@
-from Algorithms.OptimizationParams.Height.BorderMethod import border_method
 from Algorithms.OptimizationParams.Height.MainAlghorithm import calculate_length_focal_distance
 from Algorithms.OptimizationParams.Height.ModifiedAlgorithm import modified_calculate_length_focal_distance
 from Algorithms.OptimizationParams.Height.OneDimension import one_dimensional_optimization
@@ -14,14 +13,13 @@ if __name__ == '__main__':
     #    file.write('___________________________________________________\n\n')
 
     #print(*res, sep='\n')
-    #calculate_length_focal_distance(data_set_0, None, True)
+ 
+        
+    heights, initial_heights, focal_dist = one_dimensional_optimization(DATA_SET_0)
 
-    
-    initial_heights, heights, focal_dist = one_dimensional_optimization(DATA_SET_0)
-
-    print(f'Начальное приближение = {initial_heights}',
-          f'Список высот = {heights}',
-          f'Фокальный отрезок = {focal_dist}',
+    print(f'Начальное приближение = {initial_heights} мкм',
+          f'Список высот = {heights} мкм',
+          f'Фокальный отрезок = {focal_dist * 100} см',
           sep='\n')
     
 

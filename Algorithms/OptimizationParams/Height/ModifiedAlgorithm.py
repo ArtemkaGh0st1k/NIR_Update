@@ -27,6 +27,7 @@ def modified_calculate_length_focal_distance(heightOptimize,
     `heightOptimize`: Высота, которая подбирается
     `heightsConstList`: Список фиксированных высот
     `currentLinse`: Текущая линза, для которой идёт оптимизация
+    `data_set_0`: Исходные данные
     '''
     
     validate_data_set(data_set_0)

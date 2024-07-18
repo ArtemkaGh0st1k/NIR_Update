@@ -109,7 +109,7 @@ def calculate_length_focal_distance(data_set_0: dict,
         mult_res = reduce(matmul, MatrixMultsList)
 
         focus_labmda_dict[lmbd] = pow( -mult_res[1,0], -1)
-
+    
     all_focus = list(focus_labmda_dict.values())
     length_focus_distance = max(all_focus) - min(all_focus)
 

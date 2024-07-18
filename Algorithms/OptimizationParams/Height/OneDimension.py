@@ -1,4 +1,16 @@
+import pytest
 from scipy.optimize import minimize, minimize_scalar
+from scipy.optimize._optimize import (fmin, fmin_ncg, fmin_bfgs, 
+                                      fmin_cg, fmin_powell, fminbound)
+from scipy.optimize.minpack2 import (dcsrch, dcstep)
+from scipy.optimize._minpack import (_hybrd, _hybrj, _chkder)
+from scipy.optimize._bracket import (_bracket_root, _bracket_minimum,
+                                     _bracket_minimum_iv, _bracket_root_iv)
+from scipy.optimize._basinhopping import (MinimizerWrapper, inspect, 
+                                          Storage, basinhopping, Metropolis)
+import scipy.optimize.tests.test__basinhopping as TestBasinhoping
+import scipy.optimize.tests.test_optimize as testOptimize
+import scipy.optimize.tests.test_bracket as TestBracket
 
 from Data.InputTestDate import validate_data_set
 from MainAlghorithm import calculate_length_focal_distance
@@ -10,8 +22,10 @@ from ModifiedAlgorithm import modified_calculate_length_focal_distance
 # итоговая матрица -> перемножение всех матриц с конца
 
 
-def one_dimensional_optimization(data_set_0: dict, eps = 1e-5
-                               ) -> tuple[list[float], list[float], float]:
+def one_dimensional_optimization(data_set_0: dict, 
+                                 initial_heights : list = None,
+                                 eps = 1e-5
+                                ) -> tuple[list[float], list[float], float]:
 
     '''
     Description
@@ -21,8 +35,8 @@ def one_dimensional_optimization(data_set_0: dict, eps = 1e-5
     Return
     ------
     Возвращает кортеж ->
-            1) Начальное приближение\n
-            2) Список высот в [мкм]\n
+            1) Список высот [мкм]\n
+            2) Начальное приближение [мкм]\n
             3) Фокальный отрезок в [м]
 
     Warning
@@ -30,14 +44,19 @@ def one_dimensional_optimization(data_set_0: dict, eps = 1e-5
     Данный метод очень сильно зависит
     от начального приближения
 
+    Params
+    ------
     `data_set_0`: начальный датасет
     `eps`: точность
     '''
 
     validate_data_set(data_set_0)
 
-    initial_height = [5., 5., 5.]
-    retuned_initial_heiht = initial_height
+    if initial_heights is None:
+        initial_heights = []
+        [initial_heights.append(1.) for _ in range(data_set_0['count_linse'])]
+    
+    retuned_initial_heihts = initial_heights.copy()
     options = {'maxiter': 100, 'xatol': eps}
 
     globalIter = 0
@@ -60,20 +79,20 @@ def one_dimensional_optimization(data_set_0: dict, eps = 1e-5
             for numLinse in range(1, data_set_0['count_linse'] + 1):
 
                 result_scipy = minimize_scalar(modified_calculate_length_focal_distance,
-                                                method='bounded', bounds=(1, 30),
-                                                args=(initial_height,numLinse, data_set_0), options=options)
+                                                method='bounded', bounds=(1, 6),
+                                                args=(retuned_initial_heihts, numLinse, data_set_0), options=options)
                 if result_scipy.success:
-                    height = result_scipy.x
-                    initial_height[numLinse-1] = height
+                    height = float(result_scipy.x)
+                    retuned_initial_heihts[numLinse-1] = height
                 else:
                     raise TypeError('Внимательно подавайте аргументы в функцию!')
             
             localIter += 1
-            localFocalDit_Dict[f'Iter_{localIter}'] =  calculate_length_focal_distance(data_set_0, initial_height)
+            localFocalDit_Dict[f'Iter_{localIter}'] =  calculate_length_focal_distance(data_set_0, retuned_initial_heihts)
 
         localFocalDit_Dict.clear()
         globalIter +=1
-        globalFocalDit_Dict[f'Iter_{globalIter}'] = calculate_length_focal_distance(data_set_0, initial_height)  
+        globalFocalDit_Dict[f'Iter_{globalIter}'] = calculate_length_focal_distance(data_set_0, retuned_initial_heihts)  
 
-    return retuned_initial_heiht, initial_height, globalFocalDit_Dict[f'Iter_{globalIter}']
+    return retuned_initial_heihts, initial_heights, globalFocalDit_Dict[f'Iter_{globalIter}']
       
