@@ -9,7 +9,7 @@ from scipy.optimize._bracket import (_bracket_root, _bracket_minimum,
 from scipy.optimize._basinhopping import (MinimizerWrapper, inspect, 
                                           Storage, basinhopping, Metropolis)
 import scipy.optimize.tests.test__basinhopping as TestBasinhoping
-import scipy.optimize.tests.test_optimize as testOptimize
+import scipy.optimize.tests.test_optimize as TestOptimize
 import scipy.optimize.tests.test_bracket as TestBracket
 
 from Data.InputTestDate import validate_data_set
