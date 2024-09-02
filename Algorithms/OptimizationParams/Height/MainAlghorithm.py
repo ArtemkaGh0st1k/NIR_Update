@@ -30,7 +30,7 @@ np.seterr(all='warn')
 #FIXME: пофиксить функцию, добавить новые параметры для дальнейших оптимизаций
 def calculate_length_focal_distance(data_set_0: dict,
                                     height_optimize_list: list[float] = None,
-                                    show_plot = False) -> float:
+                                    save_plot = False) -> float:
     
     '''
     Description
@@ -40,13 +40,13 @@ def calculate_length_focal_distance(data_set_0: dict,
     
     Return
     ------
-    Функция возвращает длину фокального отрезка
+    Функция возвращает длину фокального отрезка в [м]
 
     Params
     ------
     `data_set_0`: Исходные данные
     `heightOptimizeList`: Параметр оптимизации; в данном случае список высот
-    `show_plot`: Если true -> Выводит график зависимсоти длины волны от фокусного расстояния
+    `save_plot`: Если true -> Выводит график зависимсоти длины волны от фокусного расстояния
     '''
     
     validate_data_set(data_set_0)
@@ -55,12 +55,6 @@ def calculate_length_focal_distance(data_set_0: dict,
                                 data_set_0['upper_lambda'] * 1e9,
                                 1000) # без [нм]
     
-    # Идёт заполнение массива гармоник,
-    # если не был задан массив высот
-    if height_optimize_list is None:
-        harmonics = []
-        [harmonics.append(5+i) for i in range(1, data_set_0['count_linse'] + 1)]
-
     focus_lambda_dict = {}
     for lmbd in lambda_massive:
         Matrix_Mults_List = []
@@ -70,7 +64,7 @@ def calculate_length_focal_distance(data_set_0: dict,
             focus_0 = data_set_0['focus_0'][num_linse]
 
             if height_optimize_list is None:
-                harmonica = harmonics[num_linse - 1]
+                harmonica = data_set_0['harmonica'][num_linse]
 
                 k = round((remove_degree_to_lambda_0 / (lmbd)) * harmonica) #FIXME: Правильно ли округляю число k?
                 focus = ((harmonica * remove_degree_to_lambda_0) / (k * lmbd)) * focus_0
@@ -102,7 +96,7 @@ def calculate_length_focal_distance(data_set_0: dict,
                 Transfer_Matrix = np.array(
                     [
                         [1, reduce_dist],
-                        [-optic_power, 1]
+                        [0, 1]
                     ]
                 )
                 Matrix_Mults_List.append(Transfer_Matrix)
@@ -119,23 +113,38 @@ def calculate_length_focal_distance(data_set_0: dict,
     min_val = min(all_focus)
     length_focus_distance = max(all_focus) - min(all_focus)
 
-    if show_plot: 
-        optimize_param_name = "h_" + "_".join(str(height_optimize_list).replace("[", "").replace("]", "").split())
-        save_path = os.path.join("NIR_Update", "Result", f"{optimize_param_name}.png")
+    if save_plot: 
+        if height_optimize_list is None:
+            optimize_param_name = "m_" + "_".join(str(list(data_set_0['harmonica'].values())).
+                                                  replace("[", "").
+                                                  replace("]", "").
+                                                  replace(",", "").
+                                                  split())
+        else:
+            optimize_param_name = "h_" + "_".join(str(height_optimize_list).
+                                                  replace("[", "").
+                                                  replace("]", "").
+                                                  split())
+
+        save_path = os.path.join("NIR_Update", "Result", "NewHeights", f"{optimize_param_name}.png")
         all_lamdba = list(focus_lambda_dict.keys())
 
-        x = np.array(all_lamdba)
-        y = np.array(all_focus) * 100
+        lambda_list = np.array(all_lamdba)
+        focus_list = np.array(all_focus) * 100
 
-        plt.figure(figsize=(6,5))
+        plt.figure(figsize=(7,6))
         plt.title('Зависимость длины волны от фокусного расстояния')
         plt.xlabel('Длина волны, нм')
         plt.ylabel('Фокусное расстояние, см')
         plt.grid(True)
-        plt.plot(x, y)
+        plt.plot(lambda_list, focus_list)
+        plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0), title="Длина фокального отрезка: {} см".format(length_focus_distance * 100))
         plt.savefig(save_path)
-        #plt.show() # не работает!
+        plt.close()
+        #plt.show()  не работает!
 
-        print('Длина фокального отрезка: {} см'.format(length_focus_distance * 100))
+        print('Длина фокального отрезка: {} см'.format(length_focus_distance * 100),
+              "Высоты равны = {}".format(height_optimize_list), 
+              sep=" | ")
     
     return length_focus_distance
