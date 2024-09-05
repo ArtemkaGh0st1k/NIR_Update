@@ -10,6 +10,7 @@ from operator import matmul
 from functools import reduce
 import os
 import warnings
+from colorama import Fore
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -141,9 +142,9 @@ def calculate_length_focal_distance(data_set_0: dict,
         plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.0), title="Длина фокального отрезка: {} см".format(length_focus_distance * 100))
         plt.savefig(save_path)
         plt.close()
-        #plt.show()  не работает!
 
-        print('Длина фокального отрезка: {} см'.format(length_focus_distance * 100),
+        print(Fore.GREEN,
+              'Длина фокального отрезка: {} см'.format(length_focus_distance * 100),
               "Высоты равны = {}".format(height_optimize_list), 
               sep=" | ")
     

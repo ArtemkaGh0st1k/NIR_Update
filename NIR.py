@@ -14,35 +14,6 @@ from sys import path
 
 if __name__ == '__main__':
 
-    
-    #with open(join(path[0], "Result", "results.txt"), 'a') as file:
-    #    list_str = [
-    #        "Привет, это 1 строка\n",
-    #        "Привет, это 2 строка\n",
-    #        "Привет, это 3 строка\n",
-    #        "Конец строки\n"
-    #        ] 
-    #    file.writelines(list_str)
-    #        file.write(str(elem) + '\n')
-    #    file.write('___________________________________________________\n\n')
-
-    #s = 1
-    #print(*res, sep='\n')
- 
-        
-    #heights, initial_heights, focal_dist = one_dimensional_optimization(DATA_SET_0)
-
-    #print(f'Начальное приближение = {initial_heights} мкм',
-    #      f'Список высот = {heights} мкм',
-    #      f'Фокальный отрезок = {focal_dist * 100} см',
-    #      sep='\n')
-    
-    #res = calculate_length_focal_distance(DATA_SET_0, None, True)
-    #result = list(differential_evolution_new())
-    #optimized_heights, min_focus_length = result[-1]
-    #print(f"Optimized Heights: {optimized_heights}")
-    #print(f"Minimum Focus Length: {min_focus_length}")
-
 
     '''
     lr = 0.01
@@ -50,7 +21,7 @@ if __name__ == '__main__':
     max_iter = 1000
     detorminator = 1e-4
 
-    fig, axs = plt.subplots(nrows=1, ncols=3, figsize=(15,8))
+    fig, axs = plt.subplots(nrows=1, ncols=5, figsize=(25,8))
     plt.subplots_adjust(wspace=0.3)
     x1 = np.linspace(0, 2, 100)
     x2 = np.linspace(2, 4, 100)
