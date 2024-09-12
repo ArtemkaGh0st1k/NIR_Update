@@ -9,7 +9,6 @@
 from operator import matmul
 from functools import reduce
 import os
-import warnings
 from colorama import Fore
 
 import numpy as np
@@ -17,18 +16,13 @@ import matplotlib.pyplot as plt
 
 from Data.InputTestDate import validate_data_set
 
-#warnings.filterwarnings("ignore", category=RuntimeWarning)
+
 np.seterr(all='warn')
 
 # матрица преломления -> R = [1 0; -Ф 1]
 # матрица переноса -> T = [1 d/n; 0 1], где d - расстояние м/у линзами
 # формула для фокусн.раст f(k,lamda) = (m * lamda_0) / (k * lamda) * f_0
 # итоговая матрица -> перемножение всех матриц с конца
-
-
-#TODO: подумать насчёт правильности/логичности алгоритма
-#FIXME: посмотреть значения данных, их размерность
-#FIXME: пофиксить функцию, добавить новые параметры для дальнейших оптимизаций
 def calculate_length_focal_distance(data_set_0: dict,
                                     height_optimize_list: list[float] = None,
                                     save_plot = False) -> float:

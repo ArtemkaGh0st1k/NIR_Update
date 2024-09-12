@@ -1,3 +1,11 @@
+"""
+--------------------------------------------------------------------
+Данный модуль хранит в себе главный алгоритм оптимизации, 
+а имеено градиентный спуск для параметра оптимизации - `высоты`
+-----------------------------------------------------------------
+"""
+
+
 from operator import matmul
 from functools import reduce
 import time 
@@ -6,16 +14,15 @@ from colorama import Fore
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.axes import Axes
 
 from Data.InputTestDate import validate_data_set, DATA_SET_0
 from MainAlghorithm import calculate_length_focal_distance
-from utils.CustomExceptions import LowerException, UpperException
+from Utils.Converter import custom_converter_tolist
 
 LERNING_RATE = 0.01
 MAX_ITER = 1000
 STEP_H = 0.1 
-DENOMINATOR = 1e-3
+DENOMINATOR = 1e-2
 
 # m -> фиксированное целое число
 # lambda_0 -> идёт подбор этого подбора в зависимости от поданной высоты
@@ -46,23 +53,10 @@ def loss_function(data_set_0: dict,
             height_optimize = heights_optimize[num_linse-1] * 1e-6
             refractive_index = data_set_0['refractive_index'][num_linse]
 
-            lambda_0 = height_optimize * (refractive_index - 1) / harmonica
-            #diff_1 = lambda_0 - data_set_0['lower_lambda']
-            #diff_2 = lambda_0 - data_set_0['upper_lambda']
-
-            #if (lambda_0 - data_set_0['lower_lambda'] < 0):
-            #    left_border = harmonica / (refractive_index - 1) * data_set_0['lower_lambda'] * 1e6 # в [мкм]
-            #    raise LowerException("Данная длина волны ниже заданного диапазона!", left_border, num_linse)
-            #elif (lambda_0 - data_set_0['upper_lambda'] > 0):
-            #    right_border = harmonica / (refractive_index - 1)  * data_set_0['upper_lambda'] * 1e6 # в [мкм]
-            #    raise UpperException("Данная длина волны выше заданного диапазона!", right_border, num_linse)
-
-            #if (lambda_0 > data_set_0["upper_lambda"] or lambda_0 < data_set_0['lower_lambda']): 
-            #    border_warn = "Базовая длина волны должна лежать в дипазоне от {} мкм до {} мкм".format(left_border, right_border) 
-            #    raise Exception("Данная длина волны не входит в заданный диапазон!", left_border, right_border)
-            
+            lambda_0 = height_optimize * (refractive_index - 1) / harmonica            
             k = round((lambda_0 / (lmbd)) * harmonica)
             if k == 0: k = 1
+
             focus = ((harmonica * lambda_0) / (k * lmbd)) * focus_0
             optic_power = 1 / focus 
 
@@ -93,32 +87,12 @@ def loss_function(data_set_0: dict,
         Matrix_Mults_List = np.array(Matrix_Mults_List)
 
         mult_res = reduce(matmul, Matrix_Mults_List)
-
         focus_lambda_dict[lmbd] = - 1 / mult_res[1, 0]
     
     all_focus = list(focus_lambda_dict.values())
     length_focus_distance = max(all_focus) - min(all_focus)
     
     return length_focus_distance
-
-
-def check_range_heights(heights : np.ndarray, 
-                        loss_func) -> tuple[bool, np.ndarray]:
-    
-    is_active = False
-    for i in range(len(heights)):
-        try:
-            loss_func_original = loss_func(DATA_SET_0, heights)
-        except LowerException as low_exc:
-            h_min = low_exc.args[1]
-            heights[i] = h_min
-            is_active = True
-        except UpperException as up_exc:
-            h_max = up_exc.args[1]
-            heights[i] = h_max - 1.
-            is_active = True
-
-    return is_active, heights
     
 
 def collect_min_max_h_range(data_set_0: dict) -> dict[int, tuple[float, float]]:
@@ -144,9 +118,27 @@ def collect_min_max_h_range(data_set_0: dict) -> dict[int, tuple[float, float]]:
     return collect_data    
 
 
-def numerical_gradient(heights : np.ndarray,
+def numerical_gradient(heights : np.ndarray | list,
                        loss_func = loss_function, 
                        step_h = STEP_H, denominator = DENOMINATOR) -> np.ndarray[float]:
+    '''
+        Description:
+        ---------------
+        Численный градиент, т.к целевая функция имеет неявный вид
+
+        Return:
+        ----------
+        Возвращяет численный градиент
+
+        Params:
+        ---------
+
+        `heights`: Параметр оптимизации (высоты)
+        `loss_func`: Функция потерь (или целевая функция)
+        `step_h` : Шаг для параметра оптимизации (высоты)
+        `denominator` : Знаменатель, для выбора масштаба градиента
+
+    '''
     
     grad = np.zeros_like(heights)
     for i in range(len(heights)):
@@ -170,11 +162,16 @@ def numerical_gradient(heights : np.ndarray,
     return grad
 
 
-def gradient_descent_simple_3(initial_params : list[float] | np.ndarray,
-                           max_iter = MAX_ITER, learning_rate = LERNING_RATE, momentum = 0.8, acc = 1e-5,
-                           loss_func = loss_function,
-                           grad_func = numerical_gradient):
+def gradient_descent(initial_params : list[float] | np.ndarray,
+                     max_iter = MAX_ITER, learning_rate = LERNING_RATE,
+                     loss_func = loss_function,
+                     grad_func = numerical_gradient):
     
+    '''
+        
+    '''
+    
+    # Проверка на выход из допустимого диапазона высоты
     collect_data = collect_min_max_h_range(DATA_SET_0)
     for i, param in enumerate(initial_params, start=1):
         min_h = collect_data[i][0]
@@ -185,65 +182,34 @@ def gradient_descent_simple_3(initial_params : list[float] | np.ndarray,
         elif (param > max_h):
             initial_params[i-1] = max_h
 
+    h = None
+    h_list = []
 
-    h1_list = []
-    h2_list = []
-    h3_list = []
-    h4_list = []
-    h5_list = []
-
-    h1 = None
-    h2 = None
-    h3 = None
-    h4 = None
-    h5 = None
-
-    h1_list.append(initial_params[0])
-    h2_list.append(initial_params[1])
-    h3_list.append(initial_params[2])
-    h4_list.append(initial_params[3])
-    h5_list.append(initial_params[4])
-
-    h1 = initial_params[0]
-    h2 = initial_params[1]
-    h3 = initial_params[2]
-    h4 = initial_params[3]
-    h5 = initial_params[4]
-
-    h_general_list = np.array([h1, h2, h3, h4, h5])
+    h = np.array(initial_params)
+    h_list.append(h.copy())
 
     start_time = time.time()
-    for i in range(max_iter):
+    for _ in range(max_iter):
 
-        grad = grad_func(h_general_list, loss_func)
+        grad = grad_func(h, loss_func)
 
-        # Обновляем параметры
-        h1 -= learning_rate * grad[0]
-        h2 -= learning_rate * grad[1]
-        h3 -= learning_rate * grad[2]
-        h4 -= learning_rate * grad[3]
-        h5 -= learning_rate * grad[4]
-
-        # Нужны списки для последующей визуализации град.спуска для каждой высоты
-        h1_list.append(h1)
-        h2_list.append(h2)
-        h3_list.append(h3)
-        h4_list.append(h4)
-        h5_list.append(h5)
-
-        h_general_list = np.array([h1, h2, h3, h4, h5])
-
+        h -= learning_rate * grad
+        h_copy = h.copy()
+        h_list.append(h_copy)
+        
     end_time = time.time()
     diff_time = end_time - start_time
     print(Fore.BLUE, "Время работы град.спуска = {} м {} с".format(diff_time // 60, diff_time % 60))
-    return (h1, h2, h3, h4, h5), (h1_list, h2_list, h3_list, h4_list, h5_list)
+    return h, h_list
 
 
-def visualizetion_gradient_descent_3_param(initial_heights : list[float] | np.ndarray = None):
+def visualization_gradient_descent(initial_heights : list[float] | np.ndarray = None):
     if initial_heights is None: 
-        initial_heights = [8., 8., 8., 8., 8.]
+        initial_heights = []
+        [initial_heights.append(1.) for _ in range(DATA_SET_0['count_linse'])]
     
-    height_optimize_list, h = gradient_descent_simple_3(initial_heights)
+    height_optimize_list, h = gradient_descent(initial_heights)
+    h_convert = custom_converter_tolist(size=DATA_SET_0['count_linse'], current_list=h)
     focus_dist = calculate_length_focal_distance(DATA_SET_0, height_optimize_list)
     collect_min_max_h = collect_min_max_h_range(DATA_SET_0)
 
@@ -255,7 +221,7 @@ def visualizetion_gradient_descent_3_param(initial_heights : list[float] | np.nd
                                           ['lr={}_step_h={}_max_iter={}_detorminator={}'.format(LERNING_RATE, STEP_H, MAX_ITER, DENOMINATOR)])
     
     count_linse = DATA_SET_0['count_linse']
-    figsize = None
+    figsize = (15, 7)
     if (count_linse == 4): figsize = (20, 7)
     elif (count_linse == 5): figsize = (25, 7)
 
@@ -283,10 +249,10 @@ def visualizetion_gradient_descent_3_param(initial_heights : list[float] | np.nd
                 focus_0 * 100
                 )
 
-        ax.set_title(f"График градиентого спуска для {i}-ый высоты")
-        ax.set_xlabel("Иттерация")
+        ax.set_title(f"График град.спуска для {i}-ый высоты")
+        ax.set_xlabel("Итерация")
         ax.set_ylabel(f"Высота {i}-ой линзы, мкм")
-        ax.plot(h[i-1], label=label)
+        ax.plot(h_convert[i-1], label=label)
         ax.plot(iter_massive, min_h_masssive, color='green')
         ax.plot(iter_massive, max_h_massive, color='red')
         ax.grid(True)
