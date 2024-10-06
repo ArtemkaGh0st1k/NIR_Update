@@ -45,7 +45,7 @@ def validate_data_set(data_set: dict):
 
     count_linse = data_set['count_linse']
 
-    if data_set['count_linse'] <= 1: 
+    if count_linse <= 1: 
         raise ValueError('Количество линз должно быть больше 1')
 
     for key in data_set:
