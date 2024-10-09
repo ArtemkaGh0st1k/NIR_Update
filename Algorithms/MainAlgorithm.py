@@ -1,33 +1,28 @@
 """
-Данный модуль предусматривает ту версию град.спуска, 
-в котором визуализация для высот была 
+Основной модуль расчёта
 """
-
-
 
 from operator import matmul
 from functools import reduce
 import time 
 import os
 from colorama import Fore
+from typing import TypeVar
 
 import numpy as np
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
-from accessify import private, protected
 
 from Data.InputTestDate import validate_data_set, DATA_SET_0
-from Utils.Converter import (custom_converter_tolist,
-                             custom_converter_tostr)
+from Utils.Converter import custom_converter_tostr
 from Utils.Plot import create_subplots
 
+
+SelfCalc = TypeVar("SelfCalc", bound="Calc")
 class Calc():
-    '''
-    `Description`: Основной класс расчёта
-    '''
-    def __init__(self, 
+    def __init__(self : SelfCalc, 
                  max_iter=1000,
-                 lr : dict[str, float] = { 'h':0.05, 'd':0.01, 'f_0':0.01 },
+                 lr : dict[str, float] = { 'h':0.01, 'd':0.01, 'f_0':0.01 },
                  step : dict[str, float] = { 'h':0.1, 'd': 5, 'f_0': 5 },
                  denominator : dict[str, float] = { 'h':1e-3, 'd':1e-3, 'f_0':1e-3 }) -> None:
         '''
@@ -52,19 +47,28 @@ class Calc():
 
     
     @property
-    def get_h(self) -> np.ndarray[float]:
+    def get_h(self : SelfCalc) -> np.ndarray[float]:
+        '''
+        Возвращает найденные высоты для каждой линзы в виде списка
+        '''
         return self._h
     
     @property
-    def get_d(self) -> np.ndarray[float]:
+    def get_d(self : SelfCalc) -> np.ndarray[float]:
+        '''
+        Возвращает найденные расстояния для каждой пары линз в виде списка
+        '''
         return self._d
     
     @property
-    def get_f_0(self) -> np.ndarray[float]:
+    def get_f_0(self : SelfCalc) -> np.ndarray[float]:
+        '''
+        Возвращает найденные базовые фокусы для каждой линзы в виде списка
+        '''
         return self._f_0
     
     @property
-    def get_time_grad_desc(self) -> tuple[int, float]:
+    def get_time_grad_desc(self : SelfCalc) -> tuple[int, float]:
         '''
         Возвращает время, затраченное на алгоритм град.спуска
         в минутах и секундах
@@ -72,7 +76,23 @@ class Calc():
         return (self._time_grad_desc // 60, self._time_grad_desc % 60)
     
 
-    def __collect_optimize_params(self, initial_data_set : dict) -> dict[str, bool]:
+    def __collect_optimize_params(self : SelfCalc, initial_data_set : dict) -> dict[str, bool]:
+            '''
+            Description:
+            ------------
+            Собирает информацию о том, какие параметры будут
+            учавствовать в алгоритме
+
+            Return:
+            -------
+            Возвращает словарь в виде:\n
+            key - имя параметра\n
+            value - bool параметр, если он учавствует в оптимизации
+
+            :Params:\n
+            `initial_data_set`: Исходные данные в виде словаря
+            '''
+            
             is_h = False
             is_distance = False
             is_focus_0 = False
@@ -93,16 +113,11 @@ class Calc():
                     }
 
 
-    def loss_function(self,
+    def loss_function(self : SelfCalc,
                       initial_data_set: dict,
                       save_plot = False) -> float:
         
         '''
-        Warning:
-        --------
-        По умолчанию высота является обязательным параметром оптимизации.\n
-        В противном случае алгоритм не пойдёт дальше и выдаст ошибку! 
-
         Description:
         -----------
         Целевая функция\n
@@ -119,8 +134,8 @@ class Calc():
 
         :Params:\n
         -------
-        `data_set_0`: Исходные данные в виде словаря\n
-        `heights_optimize`: Массив высот (приходит не в [мкм]!!!)
+        `initial_data_set`: Исходные данные в виде словаря\n
+        `save_plot`: Сохранить ли график
         '''
 
         is_params = self.__collect_optimize_params(initial_data_set)
@@ -143,7 +158,10 @@ class Calc():
                            if is_params['f_0']
                            else DATA_SET_0['focus_0'][i]) 
                 
-                height = initial_data_set['height'][i] * 1e-6
+                height = (initial_data_set['height'][i] * 1e-6
+                          if is_params['h']
+                          else 
+                          (DATA_SET_0['harmonica'][i] * DATA_SET_0['lambda_0'][i] / (DATA_SET_0['refractive_index'][i] - 1)))
                 lambda_0 = height * (refractive_index - 1) / harmonica            
                 k = round((lambda_0 / (lmbd)) * harmonica)
                 if k == 0: k = 1
@@ -221,7 +239,7 @@ class Calc():
         return length_focus_distance
     
 
-    def __collect_min_max_params_range(self, initial_data_set: dict) -> dict:
+    def __collect_min_max_params_range(self : SelfCalc, initial_data_set: dict) -> dict:
 
         '''
         Description:
@@ -233,6 +251,9 @@ class Calc():
         -------
         Возвращает словарь, в котором ключ - номер линзы,\n
         а значение - кортеж мин и макс допустимый высоты для данной линзы
+
+        :Params:\n
+        `initial_data_set`: Исходные данные в виде словаря
         '''
 
         is_params = self.__collect_optimize_params(initial_data_set)
@@ -269,9 +290,9 @@ class Calc():
         return collect_data 
     
 
-    def __numerical_gradient(self, initial_data_set : dict) -> tuple[np.ndarray[float],
-                                                                    np.ndarray[float] | None,
-                                                                    np.ndarray[float] | None]:
+    def __numerical_gradient(self : SelfCalc, initial_data_set : dict) -> tuple[np.ndarray[float],
+                                                                                np.ndarray[float] | None,
+                                                                                np.ndarray[float] | None]:
         '''
         Description:
         ---------------
@@ -279,67 +300,86 @@ class Calc():
 
         Return:
         ----------
-        Возвращяет численный градиент
-
-        :Params:\n
-        '''
+        Возвращяет численный градиент, в виде кортежа для каждого параметра оптимизации
         
+        :Params:\n
+        `initial_data_set`: Исходные данные в виде словаря
+        '''
+
+        initial_data_set_copy = initial_data_set.copy()
         is_params = self.__collect_optimize_params(initial_data_set)
         
-        grad_h = np.zeros_like(list(initial_data_set['height'].values())).astype('float64')
-        grad_d = (np.zeros_like(list(initial_data_set['distance'].values()).astype('float64')) 
+        grad_h = (np.zeros_like(list(initial_data_set_copy['height'].values())).astype('float64')
+                  if is_params['h']
+                  else None)
+        grad_d = ((np.zeros_like(list(initial_data_set_copy['distance'].values())).astype('float64')) 
                     if is_params['d']
                     else None)
-        grad_f_0 = (np.zeros_like(list(initial_data_set['focus_0'].values()).astype('float64'))
+        grad_f_0 = ((np.zeros_like(list(initial_data_set_copy['focus_0'].values())).astype('float64'))
                     if is_params['f_0']
                     else None)
 
         for i in range(1, DATA_SET_0['count_linse'] + 1):
             if is_params['h']:
-                orig_val_h = initial_data_set['height'][i]
+                orig_val_h = initial_data_set_copy['height'][i]
 
-                initial_data_set['height'][i] = orig_val_h + self._STEP['h']
-                loss_func_plus_h = self.loss_function(initial_data_set)
+                initial_data_set_copy['height'][i] = orig_val_h + self._STEP['h']
+                loss_func_plus_h = self.loss_function(initial_data_set_copy)
 
-                initial_data_set['height'][i] = orig_val_h
-                loss_func_orig_h = self.loss_function(initial_data_set)
+                initial_data_set_copy['height'][i] = orig_val_h
+                loss_func_orig_h = self.loss_function(initial_data_set_copy)
                         
                 grad_h[i-1] = (loss_func_plus_h - loss_func_orig_h) / self._DENOMINATOR['h']
 
-                initial_data_set['height'][i] = orig_val_h
+                initial_data_set_copy['height'][i] = orig_val_h
 
             if is_params['d'] and i != DATA_SET_0['count_linse']:
-                orig_val_d = initial_data_set['distance'][f'{i}-{i+1}'] 
+                orig_val_d = initial_data_set_copy['distance'][f'{i}-{i+1}'] 
 
-                initial_data_set['distance'][f'{i}-{i+1}'] = orig_val_d + self._STEP['d']
-                loss_func_plus_d = self.loss_function(initial_data_set)
+                initial_data_set_copy['distance'][f'{i}-{i+1}'] = orig_val_d + self._STEP['d']
+                loss_func_plus_d = self.loss_function(initial_data_set_copy)
 
-                initial_data_set['distance'][f'{i}-{i+1}'] = orig_val_d
-                loss_func_orig_d = self.loss_function(initial_data_set)
+                initial_data_set_copy['distance'][f'{i}-{i+1}'] = orig_val_d
+                loss_func_orig_d = self.loss_function(initial_data_set_copy)
                         
                 grad_d[i-1] = (loss_func_plus_d - loss_func_orig_d) / self._DENOMINATOR['d']
 
-                initial_data_set['distance'][f'{i}-{i+1}'] = orig_val_d
+                initial_data_set_copy['distance'][f'{i}-{i+1}'] = orig_val_d
             
             if is_params['f_0']:
-                orig_val_f_0 = initial_data_set['focus_0'][i]
+                orig_val_f_0 = initial_data_set_copy['focus_0'][i]
 
-                initial_data_set['focus_0'][i] = orig_val_f_0 + self._STEP['f_0']
-                loss_func_plus_f_0 = self.loss_function(initial_data_set)
+                initial_data_set_copy['focus_0'][i] = orig_val_f_0 + self._STEP['f_0']
+                loss_func_plus_f_0 = self.loss_function(initial_data_set_copy)
 
-                initial_data_set['focus_0'][i] = orig_val_f_0
-                loss_func_orig_f_0 = self.loss_function(initial_data_set)
+                initial_data_set_copy['focus_0'][i] = orig_val_f_0
+                loss_func_orig_f_0 = self.loss_function(initial_data_set_copy)
                         
                 grad_f_0[i-1] = (loss_func_plus_f_0 - loss_func_orig_f_0) / self._DENOMINATOR['f_0']
 
-                initial_data_set['focus_0'][i] = orig_val_f_0
+                initial_data_set_copy['focus_0'][i] = orig_val_f_0
 
         return (grad_h, grad_d, grad_f_0)
         
     
-    def __gradient_descent(self, initial_data_set : dict) -> tuple[ list[list[float]] | None,
-                                                                    list[list[float]] | None,
-                                                                    list[list[float]] | None]: 
+    def __gradient_descent(self : SelfCalc, initial_data_set : dict) -> tuple[ list[list[float]] | None,
+                                                                               list[list[float]] | None,
+                                                                               list[list[float]] | None]: 
+        
+        '''
+        Description:
+        ------------
+        Оснвоной метод градиентного спуска
+
+        Return:
+        -------
+        Возвращает кортеж из списка всех значений, которые были найдены
+        в ходе алгоритма для каждого параметра оптимизацииы
+
+        :Params:\n
+        `initial_data_set`: Исходные данные в виде словаря
+        '''
+
         is_params = self.__collect_optimize_params(initial_data_set)
         collect_data = self.__collect_min_max_params_range(initial_data_set)
         for key in enumerate(initial_data_set, start=1):
@@ -360,15 +400,13 @@ class Calc():
             grad_h = 0
         if is_params['d']:
             list_d = [[initial_data_set_copy['distance'][f'{i}-{i+1}']] for i in range(1, DATA_SET_0['count_linse'])]
-            d = np.array(list(initial_data_set_copy['distance'].values()))
+            d = list(initial_data_set_copy['distance'].values())
             grad_d = 0
         if is_params['f_0']:
             list_f0 = [[initial_data_set_copy['focus_0'][i]] for i in range(1, DATA_SET_0['count_linse'] + 1)]
-            f0 = np.array(list(initial_data_set_copy['focus_0'].values()))
+            f0 = list(initial_data_set_copy['focus_0'].values())
             grad_f0 = 0
 
- 
-        #FIXME: Вопрос с размерностью параметров!
         start_time = time.time()
         for _ in range(self._MAX_ITER):
         
@@ -390,7 +428,7 @@ class Calc():
                 grad = self.__numerical_gradient(initial_data_set_copy)
                 grad_d = grad[1]
                 d -= self._LEARNING_RATE['d'] * grad_d
-                list_d.append(d.copy())
+                [list_d[i].append(d[i]) for i in range(len(d))]
 
                 initial_data_set_copy['distance'] = \
                 {
@@ -403,7 +441,7 @@ class Calc():
                 grad = self.__numerical_gradient(initial_data_set_copy)
                 grad_f0 = grad[2]
                 f0 -= self._LEARNING_RATE['f_0'] * grad_f0
-                list_f0.append(f0.copy())
+                [list_f0[i].append(f0[i]) for i in range(len(f0))]
 
                 initial_data_set_copy['focus_0'] = \
                 {
@@ -426,9 +464,8 @@ class Calc():
         return (list_h, list_d, list_f0)
         
 
-    def visualization_gradient_descent(self, 
-                                       initial_data_set: dict,
-                                       fname = None):
+    def visualization_gradient_descent(self : SelfCalc, 
+                                       initial_data_set: dict):
         
         '''
         Description:
@@ -436,8 +473,7 @@ class Calc():
         Основной алгоритм для вывода и визуализации градиентного спуска
 
         :Params:\n
-        `initial_heights`: Начальное приближение для высот (подаётся в [мкм]!)\n
-        `fname`: Полный путь для сохранения результата визуализации
+        `initial_data_set`: Исходные данные в виде словаря (все подаётся не в СИ!!!)\n
         '''
 
         count_linse = DATA_SET_0['count_linse']
@@ -448,10 +484,7 @@ class Calc():
                                                                       # #TODO: Нужно будет подкорректировать, учесть что h - необязат.парам 
         optimize_params = self.__gradient_descent(initial_data_set) # Получаем результат и важно, 
                                                                       # что initial_params должен поменяться,
-                                                                      # с учётом новых параметров 
-        focus_dist = self.loss_function(initial_data_set) # Как раз можно проверить, что на вход
-                                                        # идут уже обновленные парамеры
-
+                                                                      # с учётом новых параметров
         nrow_h = 0
         ncols_h = 0
         if is_params['h']:
@@ -484,8 +517,7 @@ class Calc():
         optimize_param_name = custom_converter_tostr(initial_data_set,
                                                      is_params)
         
-        create_subplots(self, 
-                       focus_dist,
+        create_subplots(self,
                        borders,
                        list_convert=common_list,
                        rows=nrows,

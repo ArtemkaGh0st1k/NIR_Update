@@ -1,7 +1,5 @@
 import os
-from os.path import (join, isdir)
-import time
-from colorama import Fore
+from os.path import join
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -9,9 +7,7 @@ import numpy as np
 from Data.InputTestDate import DATA_SET_0
 from Utils.Path import create_dir
 
-
 def create_subplots(self,
-                    focus_dist : float,
                     borders : dict,
                     list_convert : list[ dict[str, list] ],
                     rows : int,
@@ -26,25 +22,38 @@ def create_subplots(self,
 
             iter_massive = list(range(1, self._MAX_ITER + 1))
             xlabel = "Итерация"
-            
+            initial_data_set = {}
+            for key in is_params:
+              if is_params[key]:
+                match key:
+                  case 'h':
+                    initial_data_set['height'] = \
+                    {
+                        key_h: value_h 
+                        for key_h, value_h
+                        in zip(list(range(1, len(self._h) + 1)), self._h)
+                    }
+                  case 'd':
+                    initial_data_set['distance'] = \
+                    {
+                      key_d: value_d 
+                      for key_d, value_d
+                      in zip(list(range(1, len(self._d) + 1)), self._d)
+                    }              
+                  case 'f_0':
+                    initial_data_set['focus_0'] = \
+                    {
+                      key_f0: value_f0 
+                      for key_f0, value_f0
+                      in zip(list(range(1, len(self._f_0) + 1)), self._f_0)
+                    }
+
             fig, axs = plt.subplots(nrows=rows, ncols=cols, figsize=(10 + 1.5 * rows_copy, 10 + 1.5 * cols_copy))
 
             fig.subplots_adjust(wspace=0.4, hspace=0.4)
             fig.legend(loc='upper center',
                       bbox_to_anchor=(0.5, 1.0),
-                      title=f"Фокальный отрезок = {focus_dist * 100} см")
-            fig.legend(labels=\
-                       [
-                          'step_h={}'.format(self._STEP['h']),
-                          'step_d={}'.format(self._STEP['d']),
-                          'step_f_0={}'.format(self._STEP['f_0']),
-                          'lr_h={}'.format(self._LEARNING_RATE['d']),
-                          'lr_d={}'.format(self._LEARNING_RATE['d']),
-                          'lr_f_0={}'.format(self._LEARNING_RATE['f_0']),
-                          'denom_h={}'.format(self._DENOMINATOR['h']),
-                          'denom_d={}'.format(self._DENOMINATOR['d']),
-                          'denom_f_0={}'.format(self._DENOMINATOR['f_0'])
-                       ], loc='upper left')
+                      title=f"Фокальный отрезок = {self.loss_function(initial_data_set) * 100} см")
             
             if len(axs.shape) == 1:
               for i in range(1, axs.shape[0] + 1):

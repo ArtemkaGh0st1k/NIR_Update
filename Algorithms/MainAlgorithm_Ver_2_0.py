@@ -407,8 +407,6 @@ class Calc_Ver_2_0():
         optimize_params = self.__gradient_descent(initial_data_set) # Получаем результат и важно, 
                                                                       # что initial_params должен поменяться,
                                                                       # с учётом новых параметров 
-        focus_dist = self.loss_function(initial_data_set) # Как раз можно проверить, что на вход
-                                                        # идут уже обновленные парамеры
 
         nrow_h = 0
         ncols_h = 0
@@ -440,18 +438,10 @@ class Calc_Ver_2_0():
                                                      is_params)
         
         create_subplots(self, 
-                       focus_dist,
                        borders,
                        list_convert=common_list,
                        rows=nrows,
                        cols=ncols,
                        optimize_param_name=optimize_param_name,
                        is_params=is_params,
-                       ver2="_ver_2_0")
-
-        
-
-
-
-        
-        
+                       ver2="_ver_2_0")        

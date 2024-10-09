@@ -6,20 +6,23 @@ from matplotlib.axes import Axes
 import numpy as np
 import os
 from colorama import Fore
-
-
+import sys
 if __name__ == '__main__':
 
+    # Для срабатывания алгоритма необходимо подобрать гиперпараметры
+    # lr, denominator и т.д
+
+    
     initial_data_set = \
     {
         'height' : \
-        {   # в [мкм]
+        {   # в [ мкм]
             1: 6,
             2: 6
         }
     }
+
     calc = Calc()
-    calc_ver_2_0 = Calc_Ver_2_0()
 
     h0 = 6
     for i in range(5):
