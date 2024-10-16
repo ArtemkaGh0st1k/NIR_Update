@@ -1,3 +1,5 @@
+from Utils.Unit import Unit
+
 """
 Данный модуль хранит информацию,
 необходимую для расчёта
@@ -9,9 +11,9 @@
 
 DATA_SET_0 = \
     {
-    'count_linse': 2,
-    'lower_lambda': 400 * 1e-9,
-    'upper_lambda': 1000 * 1e-9,
+    'count_linse': 3,
+    'lower_lambda': 400 * Unit.NANOMETER,
+    'upper_lambda': 1000 * Unit.NANOMETER,
     'refractive_index': \
         {                       # Показатель преломления каждой линзы 
             1: 1.5,
@@ -24,7 +26,8 @@ DATA_SET_0 = \
         },
     'distance': \
         {                       # Расстояние м/у линзами в [см]
-            '1-2': 10 * 1e-2
+            '1-2': 10 * Unit.CENTIMETR,
+            '2-3': 10 * Unit.CENTIMETR
         },
     'refractive_area' : \
         {                       # Показатели преломления пространства
@@ -33,13 +36,14 @@ DATA_SET_0 = \
         },
     'lambda_0': \
         {                       # Базовая длина волны для каждой линзы в [нм]
-            1: 550 * 1e-9,
-            2: 550 * 1e-9
+            1: 550 * Unit.NANOMETER,
+            2: 550 * Unit.NANOMETER
         },
     'focus_0': \
         {                       # Базовый фокус для каждой линзы в [см]
-            1: 100 * 1e-2,
-            2: 50 * 1e-2
+            1: 100 * Unit.CENTIMETR,
+            2: 100 * Unit.CENTIMETR,
+            3: 100 * Unit.CENTIMETR
         }
     }
 

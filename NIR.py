@@ -7,6 +7,9 @@ import numpy as np
 import os
 from colorama import Fore
 import sys
+from Utils.Unit import Unit
+from Utils.Calculate import find_common_focus
+
 if __name__ == '__main__':
 
     # Для срабатывания алгоритма необходимо подобрать гиперпараметры
@@ -16,12 +19,13 @@ if __name__ == '__main__':
     initial_data_set = \
     {
         'height' : \
-        {   # в [ мкм]
-            1: 6,
-            2: 6
+        {   
+            1: 6 * Unit.METER,
+            2: 6 * Unit.METER
         }
     }
 
+    focus = find_common_focus(initial_data_set)
     calc = Calc()
 
     h0 = 6
