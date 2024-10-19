@@ -11,7 +11,7 @@ from Utils.Unit import Unit
 
 DATA_SET_0 = \
     {
-    'count_linse': 3,
+    'count_linse': 2,
     'lower_lambda': 400 * Unit.NANOMETER,
     'upper_lambda': 1000 * Unit.NANOMETER,
     'refractive_index': \
@@ -27,7 +27,6 @@ DATA_SET_0 = \
     'distance': \
         {                       # Расстояние м/у линзами в [см]
             '1-2': 10 * Unit.CENTIMETR,
-            '2-3': 10 * Unit.CENTIMETR
         },
     'refractive_area' : \
         {                       # Показатели преломления пространства
@@ -42,8 +41,7 @@ DATA_SET_0 = \
     'focus_0': \
         {                       # Базовый фокус для каждой линзы в [см]
             1: 100 * Unit.CENTIMETR,
-            2: 100 * Unit.CENTIMETR,
-            3: 100 * Unit.CENTIMETR
+            2: 100 * Unit.CENTIMETR
         }
     }
 

@@ -39,6 +39,8 @@ class Calc():
         self._STEP = step
         self._MAX_ITER = max_iter
         self._DENOMINATOR = denominator
+        self._INITIAL_DATA_SET = None
+        self._diff_list = []
 
         self._time_grad_desc = 0
         self._h = None
@@ -76,7 +78,7 @@ class Calc():
         return (self._time_grad_desc // 60, self._time_grad_desc % 60)
     
 
-    def __collect_optimize_params(self : SelfCalc, initial_data_set : dict) -> dict[str, bool]:
+    def __collect_optimize_params(self : SelfCalc) -> dict[str, bool]:
             '''
             Description:
             ------------
@@ -97,7 +99,7 @@ class Calc():
             is_distance = False
             is_focus_0 = False
 
-            for key in initial_data_set:
+            for key in self._INITIAL_DATA_SET:
                 match key:
                     case "height":
                         is_h = not is_h
@@ -137,8 +139,8 @@ class Calc():
         `initial_data_set`: Исходные данные в виде словаря\n
         `save_plot`: Сохранить ли график
         '''
-
-        is_params = self.__collect_optimize_params(initial_data_set)
+        if self._INITIAL_DATA_SET is None: self._INITIAL_DATA_SET = initial_data_set.copy()
+        is_params = self.__collect_optimize_params()
 
         validate_data_set(DATA_SET_0)
         lambda_massive = np.linspace(DATA_SET_0['lower_lambda'],
@@ -239,7 +241,7 @@ class Calc():
         return length_focus_distance
     
 
-    def __collect_min_max_params_range(self : SelfCalc, initial_data_set: dict) -> dict:
+    def __collect_min_max_params_range(self : SelfCalc) -> dict:
 
         '''
         Description:
@@ -256,14 +258,12 @@ class Calc():
         `initial_data_set`: Исходные данные в виде словаря
         '''
 
-        is_params = self.__collect_optimize_params(initial_data_set)
-        #FIXME: Учесть, то что h может быть не обязательный параметр
-
+        is_params = self.__collect_optimize_params()
 
         lower_lambda = DATA_SET_0['lower_lambda']
         upper_lambda = DATA_SET_0['upper_lambda']
         if is_params['d'] and is_params['f_0']: 
-            max_distance = max(initial_data_set['distance'].values())
+            max_distance = max(self._INITIAL_DATA_SET['distance'].values())
 
         collect_data = {}
         for i in range(1, DATA_SET_0['count_linse'] + 1):   
@@ -280,7 +280,7 @@ class Calc():
                 }
 
                 if is_params['d'] and is_params['f_0']:
-                    min_focus_0 = max(max_distance, initial_data_set['focus_0'][i])
+                    min_focus_0 = max(max_distance, self._INITIAL_DATA_SET['focus_0'][i])
                     collect_data[i] = \
                     {
                         'height' : (min_h, max_h),
@@ -307,7 +307,7 @@ class Calc():
         '''
 
         initial_data_set_copy = initial_data_set.copy()
-        is_params = self.__collect_optimize_params(initial_data_set)
+        is_params = self.__collect_optimize_params()
         
         grad_h = (np.zeros_like(list(initial_data_set_copy['height'].values())).astype('float64')
                   if is_params['h']
@@ -380,8 +380,8 @@ class Calc():
         `initial_data_set`: Исходные данные в виде словаря
         '''
 
-        is_params = self.__collect_optimize_params(initial_data_set)
-        collect_data = self.__collect_min_max_params_range(initial_data_set)
+        is_params = self.__collect_optimize_params()
+        collect_data = self.__collect_min_max_params_range()
         for key in enumerate(initial_data_set, start=1):
             for j in range(1, DATA_SET_0['count_linse']  + 1):
                 match key:
@@ -475,12 +475,12 @@ class Calc():
         :Params:\n
         `initial_data_set`: Исходные данные в виде словаря (все подаётся не в СИ!!!)\n
         '''
-
+        if self._INITIAL_DATA_SET is None: self._INITIAL_DATA_SET = initial_data_set.copy() 
         count_linse = DATA_SET_0['count_linse']
         common_list = []
         
-        is_params = self.__collect_optimize_params(initial_data_set) # Проверка: какие параметры будем оптимизировать
-        borders = self.__collect_min_max_params_range(initial_data_set) # Рассчитываем допустимый диапазон параметров
+        is_params = self.__collect_optimize_params() # Проверка: какие параметры будем оптимизировать
+        borders = self.__collect_min_max_params_range() # Рассчитываем допустимый диапазон параметров
                                                                       # #TODO: Нужно будет подкорректировать, учесть что h - необязат.парам 
         optimize_params = self.__gradient_descent(initial_data_set) # Получаем результат и важно, 
                                                                       # что initial_params должен поменяться,

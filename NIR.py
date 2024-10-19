@@ -20,12 +20,11 @@ if __name__ == '__main__':
     {
         'height' : \
         {   
-            1: 6 * Unit.METER,
-            2: 6 * Unit.METER
+            1: 6,
+            2: 6 
         }
     }
 
-    focus = find_common_focus(initial_data_set)
     calc = Calc()
 
     h0 = 6
