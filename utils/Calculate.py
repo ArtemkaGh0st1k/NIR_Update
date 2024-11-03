@@ -64,7 +64,6 @@ def find_common_focus(initial_data_set : dict = None) -> float:
     try:
         get_focus = initial_data_set['focus_0']
         get_distance = initial_data_set['distance']
-        pass
     except KeyError as ke:
         raise KeyError(f'Не найдены значения в словаре по такому ключу: {ke.args}')
 

@@ -10,6 +10,7 @@ from colorama import Fore
 from typing import TypeVar
 
 import numpy as np
+from numpy.random import uniform
 import matplotlib.pyplot as plt
 from matplotlib.axes import Axes
 
@@ -40,7 +41,6 @@ class Calc():
         self._MAX_ITER = max_iter
         self._DENOMINATOR = denominator
         self._INITIAL_DATA_SET = None
-        self._diff_list = []
 
         self._time_grad_desc = 0
         self._h = None
@@ -49,21 +49,21 @@ class Calc():
 
     
     @property
-    def get_h(self : SelfCalc) -> np.ndarray[float]:
+    def get_h(self : SelfCalc) -> np.ndarray[float, 1]:
         '''
         Возвращает найденные высоты для каждой линзы в виде списка
         '''
         return self._h
     
     @property
-    def get_d(self : SelfCalc) -> np.ndarray[float]:
+    def get_d(self : SelfCalc) -> np.ndarray[float, 1]:
         '''
         Возвращает найденные расстояния для каждой пары линз в виде списка
         '''
         return self._d
     
     @property
-    def get_f_0(self : SelfCalc) -> np.ndarray[float]:
+    def get_f_0(self : SelfCalc) -> np.ndarray[float, 1]:
         '''
         Возвращает найденные базовые фокусы для каждой линзы в виде списка
         '''
@@ -233,7 +233,7 @@ class Calc():
 
             print(Fore.GREEN,
                 'Длина фокального отрезка: {} см'.format(length_focus_distance * 100),
-                'Высоты равны = {}'.format(initial_data_set['height'].values()),
+                'Высоты равны = {}'.format(list(initial_data_set['height'].values())) if is_params['h'] else "",
                 'Базовые фокусы равны = {}'.format(list(initial_data_set['focus_0'].values())) if is_params['f_0'] else "",
                 'Расстояния м/у линзами равны = {}'.format(list(initial_data_set['distance'].values())) if is_params['d'] else "",
                 sep=' | ')
@@ -382,12 +382,12 @@ class Calc():
 
         is_params = self.__collect_optimize_params()
         collect_data = self.__collect_min_max_params_range()
-        for key in enumerate(initial_data_set, start=1):
+        for _, key in enumerate(initial_data_set, start=1):
             for j in range(1, DATA_SET_0['count_linse']  + 1):
                 match key:
                     case 'height':
-                        min_h = collect_data[j][key][0] # TODO: Нужно домножить на 1e6???
-                        max_h = collect_data[j][key][1]
+                        min_h = collect_data[j][key][0] * 1e6
+                        max_h = collect_data[j][key][1] * 1e6
 
                         if initial_data_set[key][j] < min_h: initial_data_set[key][j] = min_h
                         elif initial_data_set[key][j] > max_h: initial_data_set[key][j] = max_h
