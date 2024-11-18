@@ -20,4 +20,4 @@ if __name__ == '__main__':
         } 
 
         calc.visualization_gradient_descent(initial_data_set=initial_data_set)
-        print(f'Найденные высоты_1 равны = {calc.get_h}')
+        print(f'Найденные высоты равны = {calc.get_h}')
