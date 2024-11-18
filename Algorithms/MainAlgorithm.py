@@ -115,9 +115,9 @@ class Calc():
                     }
 
 
-    def loss_function(self : SelfCalc,
-                      initial_data_set: dict,
-                      save_plot = False) -> float:
+    def calc_focus_dist(self : SelfCalc,
+                        initial_data_set: dict,
+                        save_plot = False) -> float:
         
         '''
         Description:
@@ -290,9 +290,11 @@ class Calc():
         return collect_data 
     
 
-    def __numerical_gradient(self : SelfCalc, initial_data_set : dict) -> tuple[np.ndarray[float],
-                                                                                np.ndarray[float] | None,
-                                                                                np.ndarray[float] | None]:
+    def __numerical_gradient(self : SelfCalc,
+                             initial_data_set : dict,
+                             obj_func = calc_focus_dist) -> tuple[np.ndarray[float, 1] | None,
+                                                                  np.ndarray[float, 1] | None,
+                                                                  np.ndarray[float, 1] | None]:
         '''
         Description:
         ---------------
@@ -324,10 +326,10 @@ class Calc():
                 orig_val_h = initial_data_set_copy['height'][i]
 
                 initial_data_set_copy['height'][i] = orig_val_h + self._STEP['h']
-                loss_func_plus_h = self.loss_function(initial_data_set_copy)
+                loss_func_plus_h = obj_func(self, initial_data_set_copy)
 
                 initial_data_set_copy['height'][i] = orig_val_h
-                loss_func_orig_h = self.loss_function(initial_data_set_copy)
+                loss_func_orig_h = obj_func(self, initial_data_set_copy)
                         
                 grad_h[i-1] = (loss_func_plus_h - loss_func_orig_h) / self._DENOMINATOR['h']
 
@@ -337,10 +339,10 @@ class Calc():
                 orig_val_d = initial_data_set_copy['distance'][f'{i}-{i+1}'] 
 
                 initial_data_set_copy['distance'][f'{i}-{i+1}'] = orig_val_d + self._STEP['d']
-                loss_func_plus_d = self.loss_function(initial_data_set_copy)
+                loss_func_plus_d = obj_func(self, initial_data_set_copy)
 
                 initial_data_set_copy['distance'][f'{i}-{i+1}'] = orig_val_d
-                loss_func_orig_d = self.loss_function(initial_data_set_copy)
+                loss_func_orig_d = obj_func(self, initial_data_set_copy)
                         
                 grad_d[i-1] = (loss_func_plus_d - loss_func_orig_d) / self._DENOMINATOR['d']
 
@@ -350,10 +352,10 @@ class Calc():
                 orig_val_f_0 = initial_data_set_copy['focus_0'][i]
 
                 initial_data_set_copy['focus_0'][i] = orig_val_f_0 + self._STEP['f_0']
-                loss_func_plus_f_0 = self.loss_function(initial_data_set_copy)
+                loss_func_plus_f_0 = obj_func(self, initial_data_set_copy)
 
                 initial_data_set_copy['focus_0'][i] = orig_val_f_0
-                loss_func_orig_f_0 = self.loss_function(initial_data_set_copy)
+                loss_func_orig_f_0 = obj_func(self, initial_data_set_copy)
                         
                 grad_f_0[i-1] = (loss_func_plus_f_0 - loss_func_orig_f_0) / self._DENOMINATOR['f_0']
 

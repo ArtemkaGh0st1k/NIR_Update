@@ -53,7 +53,7 @@ def create_subplots(self,
             fig.subplots_adjust(wspace=0.4, hspace=0.4)
             fig.legend(loc='upper center',
                       bbox_to_anchor=(0.5, 1.0),
-                      title=f"Фокальный отрезок = {self.loss_function(initial_data_set) * 100} см")
+                      title=f"Фокальный отрезок = {self.calc_focus_dist(initial_data_set) * 100} см")
             
             if len(axs.shape) == 1:
               for i in range(1, axs.shape[0] + 1):

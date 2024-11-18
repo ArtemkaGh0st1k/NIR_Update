@@ -67,7 +67,7 @@ def find_common_focus(initial_data_set : dict = None) -> float:
     except KeyError as ke:
         raise KeyError(f'Не найдены значения в словаре по такому ключу: {ke.args}')
 
-    count_linse = initial_data_set['count_linse']
+    count_linse = DATA_SET_0['count_linse']
    
     focus = ( (initial_data_set['focus_0'][1] * initial_data_set['focus_0'][2]) / 
             (initial_data_set['focus_0'][1] + initial_data_set['focus_0'][2]) - initial_data_set['distance']['1-2'] )
